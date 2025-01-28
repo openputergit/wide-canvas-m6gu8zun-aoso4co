@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Admin Panel</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .loading {
+            @apply fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50;
+        }
+        .loading:after {
+            content: " ";
+            @apply w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="app">
+        <div v-if="loading" class="loading"></div>
+        
+        <!-- Sidebar -->
+        <div class="fixed top-0 left-0 h-screen w-64 bg-blue-600 text-white p-4">
+            <h1 class="text-2xl font-bold mb-8">Restaurant Admin</h1>
+            <nav>
+                <button @click="currentPage = 'food'" class="w-full text-left p-2 hover:bg-blue-700 rounded mb-2" :class="{'bg-blue-700': currentPage === 'food'}">
+                    <i class="bi bi-egg-fried mr-2"></i> Food Items
+                </button>
+                <button @click="currentPage = 'staff'" class="w-full text-left p-2 hover:bg-blue-700 rounded mb-2" :class="{'bg-blue-700': currentPage === 'staff'}">
+                    <i class="bi bi-people mr-2"></i> Staff Master
+                </button>
+                <button @click="currentPage = 'salary'" class="w-full text-left p-2 hover:bg-blue-700 rounded mb-2" :class="{'bg-blue-700': currentPage === 'salary'}">
+                    <i class="bi bi-cash mr-2"></i> Staff Salary
+                </button>
+                <button @click="currentPage = 'tables'" class="w-full text-left p-2 hover:bg-blue-700 rounded mb-2" :class="{'bg-blue-700': currentPage === 'tables'}">
+                    <i class="bi bi-grid-3x3 mr-2"></i> Tables Master
+                </button>
+                <button @click="currentPage = 'attendance'" class="w-full text-left p-2 hover:bg-blue-700 rounded mb-2" :class="{'bg-blue-700': currentPage === 'attendance'}">
+                    <i class="bi bi-calendar-check mr-2"></i> Attendance
+                </button>
+                <button @click="currentPage = 'reports'" class="w-full text-left p-2 hover:bg-blue-700 rounded mb-2" :class="{'bg-blue-700': currentPage === 'reports'}">
+                    <i class="bi bi-file-earmark-text mr-2"></i> Reports
+                </button>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="ml-64 p-8">
+            <!-- Food Items -->
+            <div v-if="currentPage === 'food'">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Food Items</h2>
+                    <button @click="showFoodModal = true" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        <i class="bi bi-plus"></i> Add Food Item
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="px-6 py-3 text-left">Name</th>
+                                <th class="px-6 py-3 text-left">Category</th>
+                                <th class="px-6 py-3 text-left">Price</th>
+                                <th class="px-6 py-3 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in foodItems" :key="item.id" class="border-t">
+                                <td class="px-6 py-4">{{item.name}}</td>
+                                <td class="px-6 py-4">{{item.category}}</td>
+                                <td class="px-6 py-4">${{item.price}}</td>
+                                <td class="px-6 py-4">
+                                    <button @click="editFood(item)" class="text-blue-600 hover:text-blue-800 mr-2">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button @click="deleteFood(item.id)" class="text-red-600 hover:text-red-800">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Staff Master -->
+            <div v-if="currentPage === 'staff'">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Staff Management</h2>
+                    <button @click="showStaffModal = true" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        <i class="bi bi-plus"></i> Add Staff
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="px-6 py-3 text-left">Name</th>
+                                <th class="px-6 py-3 text-left">Position</th>
+                                <th class="px-6 py-3 text-left">Contact</th>
+                                <th class="px-6 py-3 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="staff in staffList" :key="staff.id" class="border-t">
+                                <td class="px-6 py-4">{{staff.name}}</td>
+                                <td class="px-6 py-4">{{staff.position}}</td>
+                                <td class="px-6 py-4">{{staff.contact}}</td>
+                                <td class="px-6 py-4">
+                                    <button @click="editStaff(staff)" class="text-blue-600 hover:text-blue-800 mr-2">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button @click="deleteStaff(staff.id)" class="text-red-600 hover:text-red-800">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tables -->
+            <div v-if="currentPage === 'tables'">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Table Management</h2>
+                    <button @click="showTableModal = true" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        <i class="bi bi-plus"></i> Add Table
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div v-for="table in tables" :key="table.id" 
+                        class="bg-white p-4 rounded-lg shadow">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-semibold">Table {{table.number}}</h3>
+                            <div class="flex space-x-2">
+                                <button @click="editTable(table)" class="text-blue-600 hover:text-blue-800">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button @click="deleteTable(table.id)" class="text-red-600 hover:text-red-800">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 mt-2">Capacity: {{table.capacity}} persons</p>
+                        <p class="text-gray-600">Status: 
+                            <span :class="{
+                                'text-green-600': table.status === 'Available',
+                                'text-red-600': table.status === 'Occupied',
+                                'text-yellow-600': table.status === 'Reserved'
+                            }">{{table.status}}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance -->
+            <div v-if="currentPage === 'attendance'">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Daily Attendance</h2>
+                    <input type="date" v-model="selectedDate" class="border rounded px-4 py-2">
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="px-6 py-3 text-left">Staff Name</th>
+                                <th class="px-6 py-3 text-left">Check In</th>
+                                <th class="px-6 py-3 text-left">Check Out</th>
+                                <th class="px-6 py-3 text-left">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="record in attendance" :key="record.id" class="border-t">
+                                <td class="px-6 py-4">{{record.name}}</td>
+                                <td class="px-6 py-4">{{record.checkIn}}</td>
+                                <td class="px-6 py-4">{{record.checkOut}}</td>
+                                <td class="px-6 py-4">
+                                    <span :class="{
+                                        'bg-green-100 text-green-800': record.status === 'Present',
+                                        'bg-red-100 text-red-800': record.status === 'Absent',
+                                        'bg-yellow-100 text-yellow-800': record.status === 'Late'
+                                    }" class="px-2 py-1 rounded-full text-sm">
+                                        {{record.status}}
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Reports -->
+            <div v-if="currentPage === 'reports'">
+                <h2 class="text-2xl font-bold mb-6">Reports</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-4">Sales Report</h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <input type="date" v-model="reportStartDate" class="border rounded px-3 py-1">
+                            <span class="mx-2">to</span>
+                            <input type="date" v-model="reportEndDate" class="border rounded px-3 py-1">
+                        </div>
+                        <button @click="generateSalesReport" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            Generate Report
+                        </button>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-4">Staff Report</h3>
+                        <select v-model="selectedStaffReport" class="w-full border rounded px-3 py-2 mb-4">
+                            <option value="attendance">Attendance Report</option>
+                            <option value="performance">Performance Report</option>
+                            <option value="salary">Salary Report</option>
+                        </select>
+                        <button @click="generateStaffReport" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            Generate Report
+                        </button>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold mb-4">Inventory Report</h3>
+                        <select v-model="selectedInventoryReport" class="w-full border rounded px-3 py-2 mb-4">
+                            <option value="current">Current Stock</option>
+                            <option value="usage">Usage Report</option>
+                            <option value="wastage">Wastage Report</option>
+                        </select>
+                        <button @click="generateInventoryReport" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            Generate Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <!-- Food Modal -->
+        <div v-if="showFoodModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full">
+                <h3 class="text-xl font-bold mb-4">{{editingFood ? 'Edit' : 'Add'}} Food Item</h3>
+                <form @submit.prevent="saveFoodItem">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Name</label>
+                        <input type="text" v-model="foodForm.name" class="w-full border rounded px-3 py-2" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Category</label>
+                        <select v-model="foodForm.category" class="w-full border rounded px-3 py-2" required>
+                            <option>Appetizer</option>
+                            <option>Main Course</option>
+                            <option>Dessert</option>
+                            <option>Beverage</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Price</label>
+                        <input type="number" v-model="foodForm.price" step="0.01" class="w-full border rounded px-3 py-2" required>
+                    </div>
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" @click="showFoodModal = false" 
+                            class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
+                        <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Staff Modal -->
+        <div v-if="showStaffModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full">
+                <h3 class="text-xl font-bold mb-4">{{editingStaff ? 'Edit' : 'Add'}} Staff</h3>
+                <form @submit.prevent="saveStaff">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Name</label>
+                        <input type="text" v-model="staffForm.name" class="w-full border rounded px-3 py-2" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Position</label>
+                        <select v-model="staffForm.position" class="w-full border rounded px-3 py-2" required>
+                            <option>Manager</option>
+                            <option>Chef</option>
+                            <option>Waiter</option>
+                            <option>Cashier</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Contact</label>
+                        <input type="tel" v-model="staffForm.contact" class="w-full border rounded px-3 py-2" required>
+                    </div>
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" @click="showStaffModal = false" 
+                            class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
+                        <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue
+
+        createApp({
+            setup() {
+                const loading = ref(false)
+                const currentPage = ref('food')
+                const showFoodModal = ref(false)
+                const showStaffModal = ref(false)
+                const showTableModal = ref(false)
+                const editingFood = ref(false)
+                const editingStaff = ref(false)
+                
+                const foodForm = ref({
+                    name: '',
+                    category: '',
+                    price: ''
+                })
+
+                const staffForm = ref({
+                    name: '',
+                    position: '',
+                    contact: ''
+                })
+
+                const selectedDate = ref(new Date().toISOString().split('T')[0])
+                const reportStartDate = ref('')
+                const reportEndDate = ref('')
+                const selectedStaffReport = ref('attendance')
+                const selectedInventoryReport = ref('current')
+
+                // Sample Data
+                const foodItems = ref([
+                    { id: 1, name: 'Pizza Margherita', category: 'Main Course', price: 12.99 },
+                    { id: 2, name: 'Caesar Salad', category: 'Appetizer', price: 8.99 },
+                    { id: 3, name: 'Chocolate Cake', category: 'Dessert', price: 6.99 }
+                ])
+
+                const staffList = ref([
+                    { id: 1, name: 'John Doe', position: 'Manager', contact: '555-0123' },
+                    { id: 2, name: 'Jane Smith', position: 'Chef', contact: '555-0124' },
+                    { id: 3, name: 'Mike Johnson', position: 'Waiter', contact: '555-0125' }
+                ])
+
+                const tables = ref([
+                    { id: 1, number: '1', capacity: 4, status: 'Available' },
+                    { id: 2, number: '2', capacity: 2, status: 'Occupied' },
+                    { id: 3, number: '3', capacity: 6, status: 'Reserved' }
+                ])
+
+                const attendance = ref([
+                    { id: 1, name: 'John Doe', checkIn: '09:00 AM', checkOut: '05:00 PM', status: 'Present' },
+                    { id: 2, name: 'Jane Smith', checkIn: '09:30 AM', checkOut: '05:30 PM', status: 'Late' },
+                    { id: 3, name: 'Mike Johnson', checkIn: '-', checkOut: '-', status: 'Absent' }
+                ])
+
+                // CRUD Operations
+                const saveFoodItem = () => {
+                    loading.value = true
+                    setTimeout(() => {
+                        if (editingFood.value) {
+                            // Update existing food item
+                        } else {
+                            foodItems.value.push({
+                                id: foodItems.value.length + 1,
+                                ...foodForm.value
+                            })
+                        }
+                        showFoodModal.value = false
+                        loading.value = false
+                    }, 1000)
+                }
+
+                const saveStaff = () => {
+                    loading.value = true
+                    setTimeout(() => {
+                        if (editingStaff.value) {
+                            // Update existing staff
+                        } else {
+                            staffList.value.push({
+                                id: staffList.value.length + 1,
+                                ...staffForm.value
+                            })
+                        }
+                        showStaffModal.value = false
+                        loading.value = false
+                    }, 1000)
+                }
+
+                const editFood = (item) => {
+                    editingFood.value = true
+                    foodForm.value = { ...item }
+                    showFoodModal.value = true
+                }
+
+                const editStaff = (staff) => {
+                    editingStaff.value = true
+                    staffForm.value = { ...staff }
+                    showStaffModal.value = true
+                }
+
+                const deleteFood = (id) => {
+                    if (confirm('Are you sure you want to delete this item?')) {
+                        loading.value = true
+                        setTimeout(() => {
+                            foodItems.value = foodItems.value.filter(item => item.id !== id)
+                            loading.value = false
+                        }, 1000)
+                    }
+                }
+
+                const deleteStaff = (id) => {
+                    if (confirm('Are you sure you want to delete this staff member?')) {
+                        loading.value = true
+                        setTimeout(() => {
+                            staffList.value = staffList.value.filter(staff => staff.id !== id)
+                            loading.value = false
+                        }, 1000)
+                    }
+                }
+
+                // Report Generation
+                const generateSalesReport = () => {
+                    loading.value = true
+                    setTimeout(() => {
+                        alert('Sales report generated!')
+                        loading.value = false
+                    }, 1000)
+                }
+
+                const generateStaffReport = () => {
+                    loading.value = true
+                    setTimeout(() => {
+                        alert(`${selectedStaffReport.value} report generated!`)
+                        loading.value = false
+                    }, 1000)
+                }
+
+                const generateInventoryReport = () => {
+                    loading.value = true
+                    setTimeout(() => {
+                        alert(`${selectedInventoryReport.value} inventory report generated!`)
+                        loading.value = false
+                    }, 1000)
+                }
+
+                return {
+                    loading,
+                    currentPage,
+                    showFoodModal,
+                    showStaffModal,
+                    showTableModal,
+                    editingFood,
+                    editingStaff,
+                    foodForm,
+                    staffForm,
+                    selectedDate,
+                    reportStartDate,
+                    reportEndDate,
+                    selectedStaffReport,
+                    selectedInventoryReport,
+                    foodItems,
+                    staffList,
+                    tables,
+                    attendance,
+                    saveFoodItem,
+                    saveStaff,
+                    editFood,
+                    editStaff,
+                    deleteFood,
+                    deleteStaff,
+                    generateSalesReport,
+                    generateStaffReport,
+                    generateInventoryReport
+                }
+            }
+        }).mount('#app')
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
